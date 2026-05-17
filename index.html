@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>JSON API Tester - Fetch com variáveis dinâmicas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e6edf4 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        /* container principal */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* cabeçalho */
+        .header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1F2B3C, #2c3e66);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #4a5b6e;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(0px);
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0,0,0,0.02);
+            padding: 1.6rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 24px 40px -14px rgba(0, 0, 0, 0.15);
+        }
+
+        /* linha de URL e método */
+        .url-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .url-field {
+            flex: 3;
+            min-width: 200px;
+        }
+
+        .method-field {
+            flex: 0.8;
+            min-width: 130px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #2c3e66;
+            margin-bottom: 0.4rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 18px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+
+        /* area de variáveis */
+        .variables-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px dashed #cbd5e1;
+            padding-bottom: 0.6rem;
+        }
+
+        .variables-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .btn-add {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 0.55rem 1.3rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .btn-add:hover {
+            background: #1e293b;
+            transform: scale(0.98);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* tabela de variáveis (linhas flex) */
+        .variables-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .var-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+            background: #f8fafc;
+            padding: 0.8rem 1rem;
+            border-radius: 20px;
+            border: 1px solid #e9edf2;
+            transition: background 0.1s;
+        }
+
+        .var-row:hover {
+            background: #ffffff;
+            border-color: #cbdffc;
+        }
+
+        .var-name {
+            flex: 2;
+            min-width: 130px;
+        }
+
+        .var-value {
+            flex: 2.5;
+            min-width: 160px;
+        }
+
+        .var-type {
+            flex: 1.2;
+            min-width: 110px;
+        }
+
+        .btn-remove {
+            background: #fee2e2;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            color: #b91c1c;
+            transition: 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-remove:hover {
+            background: #fecaca;
+            color: #991b1b;
+            transform: scale(0.96);
+        }
+
+        /* area de resposta + ações */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.8rem;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 14px rgba(37,99,235,0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-clear {
+            background: #475569;
+            box-shadow: none;
+        }
+
+        .btn-clear:hover {
+            background: #334155;
+        }
+
+        .status-badge {
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            font-family: monospace;
+        }
+
+        .response-area {
+            background: #0f172a;
+            border-radius: 24px;
+            padding: 1.2rem;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+        }
+
+        pre {
+            margin: 0;
+            font-family: inherit;
+        }
+
+        .empty-response {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #5b6e8c;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 680px) {
+            body {
+                padding: 1rem;
+            }
+            .card {
+                padding: 1.2rem;
+            }
+            .var-name, .var-value, .var-type {
+                flex: 1 1 100%;
+            }
+            .btn-remove {
+                flex: 0.3;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🚀 JSON Fetch Tester</h1>
+        <p>Teste requisições HTTP (GET / POST) com variáveis dinâmicas | envie dados via JSON ou query string</p>
+    </div>
+
+    <!-- Card de configuração principal -->
+    <div class="card">
+        <div class="url-row">
+            <div class="url-field">
+                <label>🔗 URL endpoint</label>
+                <input type="text" id="apiUrl" placeholder="https://jsonplaceholder.typicode.com/posts" value="https://jsonplaceholder.typicode.com/posts">
+            </div>
+            <div class="method-field">
+                <label>📡 Método HTTP</label>
+                <select id="httpMethod">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: variáveis (dinâmicas) -->
+    <div class="card">
+        <div class="variables-header">
+            <h3>📦 Variáveis de envio</h3>
+            <button class="btn-add" id="addVariableBtn">➕ Adicionar variável</button>
+        </div>
+        <div id="variablesContainer" class="variables-list">
+            <!-- As linhas serão inseridas dinamicamente via JS -->
+        </div>
+        <div style="font-size: 0.75rem; color: #4b5563; margin-top: 0.5rem;">
+            ⚡ As variáveis serão enviadas como JSON (body) para POST, ou como query parameters para GET.
+        </div>
+    </div>
+
+    <!-- Card: ações + resposta -->
+    <div class="card">
+        <div class="actions">
+            <button class="btn-primary" id="sendRequestBtn">🚀 Enviar requisição</button>
+            <button class="btn-primary btn-clear" id="clearResponseBtn">🗑️ Limpar resposta</button>
+        </div>
+
+        <div class="response-header">
+            <span class="status-badge" id="statusTag">📡 Aguardando</span>
+            <span id="timeInfo" style="font-size:0.7rem; color:#475569;"></span>
+        </div>
+        <div id="responseDisplay" class="response-area">
+            <pre id="responsePre" class="empty-response">// Clique em "Enviar requisição" para testar o fetch<br>// As variáveis serão transformadas em JSON (POST) ou query string (GET)</pre>
+        </div>
+    </div>
+    <footer>
+        🧪 Ferramenta de teste API | Suporta JSON, cabeçalho Content-Type automático, validação simples
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // ---------- DOM elements ----------
+        const urlInput = document.getElementById('apiUrl');
+        const methodSelect = document.getElementById('httpMethod');
+        const variablesContainer = document.getElementById('variablesContainer');
+        const addVariableBtn = document.getElementById('addVariableBtn');
+        const sendRequestBtn = document.getElementById('sendRequestBtn');
+        const clearResponseBtn = document.getElementById('clearResponseBtn');
+        const responsePre = document.getElementById('responsePre');
+        const statusTag = document.getElementById('statusTag');
+        const timeInfoSpan = document.getElementById('timeInfo');
+
+        // Estado: lista de variáveis reativas (array de objetos)
+        let variableRows = []; // cada objeto: { id, name, value, type }
+
+        // ID incremental para linhas
+        let nextId = 1;
+
+        // ---------- funções auxiliares UI ----------
+        function updateVariablesUI() {
+            if (!variablesContainer) return;
+            // limpa o container mantendo apenas os elementos filhos que são .var-row
+            const allRows = variablesContainer.querySelectorAll('.var-row');
+            allRows.forEach(row => row.remove());
+
+            // recria cada linha baseada no array variableRows
+            variableRows.forEach(rowData => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'var-row';
+                rowDiv.dataset.id = rowData.id;
+
+                // input nome
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'var-name';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.placeholder = 'ex: userId, title';
+                nameInput.value = rowData.name;
+                nameInput.addEventListener('input', (e) => {
+                    rowData.name = e.target.value;
+                });
+                nameDiv.appendChild(nameInput);
+
+                // input valor
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'var-value';
+                const valueInput = document.createElement('input');
+                valueInput.type = 'text';
+                valueInput.placeholder = 'valor (texto, número, etc)';
+                valueInput.value = rowData.value;
+                valueInput.addEventListener('input', (e) => {
+                    rowData.value = e.target.value;
+                });
+                valueDiv.appendChild(valueInput);
+
+                // select tipo (somente informativo, mas dá dica de parse)
+                const typeDiv = document.createElement('div');
+                typeDiv.className = 'var-type';
+                const typeSelect = document.createElement('select');
+                const optString = document.createElement('option');
+                optString.value = 'string';
+                optString.textContent = '📝 String';
+                const optNumber = document.createElement('option');
+                optNumber.value = 'number';
+                optNumber.textContent = '#️⃣ Número';
+                const optBoolean = document.createElement('option');
+                optBoolean.value = 'boolean';
+                optBoolean.textContent = '⚖️ Boolean';
+                typeSelect.appendChild(optString);
+                typeSelect.appendChild(optNumber);
+                typeSelect.appendChild(optBoolean);
+                typeSelect.value = rowData.type;
+                typeSelect.addEventListener('change', (e) => {
+                    rowData.type = e.target.value;
+                });
+                typeDiv.appendChild(typeSelect);
+
+                // botão remover
+                const removeDiv = document.createElement('div');
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn-remove';
+                removeBtn.innerHTML = '✖️ Remover';
+                removeBtn.addEventListener('click', () => {
+                    removeVariableById(rowData.id);
+                });
+                removeDiv.appendChild(removeBtn);
+
+                rowDiv.appendChild(nameDiv);
+                rowDiv.appendChild(valueDiv);
+                rowDiv.appendChild(typeDiv);
+                rowDiv.appendChild(removeDiv);
+                variablesContainer.appendChild(rowDiv);
+            });
+        }
+
+        function removeVariableById(id) {
+            variableRows = variableRows.filter(v => v.id !== id);
+            updateVariablesUI();
+        }
+
+        function addNewVariable() {
+            const newVar = {
+                id: nextId++,
+                name: '',
+                value: '',
+                type: 'string'
+            };
+            variableRows.push(newVar);
+            updateVariablesUI();
+            // rolar suavemente para o final
+            if (variablesContainer.lastElementChild) {
+                variablesContainer.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Coleta variáveis e as transforma em objeto com coerção de tipo conforme selecionado
+        function buildPayloadObject() {
+            const obj = {};
+            for (const row of variableRows) {
+                let rawName = row.name.trim();
+                if (rawName === "") continue; // ignorar variáveis sem nome
+                let rawValue = row.value;
+                let finalValue;
+                // aplica coerção baseada no tipo selecionado
+                if (row.type === 'number') {
+                    const num = Number(rawValue);
+                    finalValue = isNaN(num) ? 0 : num;
+                } else if (row.type === 'boolean') {
+                    // interpreta valores comuns: "true", "false", "1", "0"
+                    if (rawValue === 'true' || rawValue === '1' || rawValue === 'yes') finalValue = true;
+                    else if (rawValue === 'false' || rawValue === '0' || rawValue === 'no') finalValue = false;
+                    else finalValue = Boolean(rawValue);
+                } else {
+                    // string padrão
+                    finalValue = rawValue;
+                }
+                obj[rawName] = finalValue;
+            }
+            return obj;
+        }
+
+        // Função para construir query string de um objeto
+        function buildQueryString(paramsObj) {
+            const urlParams = new URLSearchParams();
+            for (const [key, val] of Object.entries(paramsObj)) {
+                // converte qualquer tipo para string para query
+                if (val !== undefined && val !== null) {
+                    urlParams.append(key, String(val));
+                }
+            }
+            const query = urlParams.toString();
+            return query ? `?${query}` : '';
+        }
+
+        // Limpar resposta visual
+        function clearResponse() {
+            responsePre.innerHTML = '// Nenhuma resposta. Faça uma requisição.';
+            responsePre.classList.add('empty-response');
+            statusTag.innerHTML = '⚪ Sem requisição';
+            timeInfoSpan.innerHTML = '';
+        }
+
+        // Função principal fetch
+        async function performFetch() {
+            // pegar url e método
+            let baseUrl = urlInput.value.trim();
+            if (!baseUrl) {
+                responsePre.innerHTML = '❌ Erro: URL não pode estar vazia.';
+                responsePre.classList.add('empty-response');
+                statusTag.innerHTML = '⚠️ URL inválida';
+                return;
+            }
+
+            const method = methodSelect.value; // 'GET' ou 'POST'
+            const payloadObject = buildPayloadObject();
+            let finalUrl = baseUrl;
+            let requestOptions = {
+                method: method,
+                headers: {
+                    'Accept': 'application/json',
+                }
+            };
+
+            // Configura para POST: enviar JSON no corpo
+            if (method === 'POST') {
+                // Se existem variáveis, enviar como JSON; se nenhuma variável, objeto vazio mesmo assim
+                requestOptions.headers['Content-Type'] = 'application/json';
+                requestOptions.body = JSON.stringify(payloadObject);
+            } 
+            else if (method === 'GET') {
+                // Para GET, adicionar variáveis como query string
+                if (Object.keys(payloadObject).length > 0) {
+                    const query = buildQueryString(payloadObject);
+                    finalUrl = baseUrl + query;
+                } else {
+                    finalUrl = baseUrl;
+                }
+                // GET não tem body
+            }
+
+            // Atualizar status e UI
+            statusTag.innerHTML = `🔄 Enviando ${method}...`;
+            timeInfoSpan.innerHTML = '';
+            responsePre.innerHTML = '⏳ Carregando...';
+            responsePre.classList.remove('empty-response');
+
+            const startTime = performance.now();
+
+            try {
+                const fetchPromise = fetch(finalUrl, requestOptions);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout após 30 segundos')), 30000)
+                );
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                const endTime = performance.now();
+                const elapsedMs = (endTime - startTime).toFixed(1);
+
+                if (!response) throw new Error('Falha na requisição');
+
+                // Tenta interpretar como JSON independente do status
+                let responseData;
+                const contentType = response.headers.get('content-type');
+                let isJson = contentType && contentType.includes('application/json');
+                
+                if (isJson) {
+                    responseData = await response.json();
+                } else {
+                    // se não for json, pegar texto
+                    responseData = await response.text();
+                }
+
+                const status = response.status;
+                const statusText = response.statusText;
+                let statusIcon = status >= 200 && status < 300 ? '✅' : '❌';
+                statusTag.innerHTML = `${statusIcon} ${status} ${statusText} - ${elapsedMs}ms`;
+                timeInfoSpan.innerHTML = `⏱️ ${elapsedMs} ms`;
+
+                // Montar uma saída rica
+                let output = '';
+                output += `// 🔹 URL final: ${finalUrl}\n`;
+                output += `// 🔹 Método: ${method}\n`;
+                if (method === 'POST' && Object.keys(payloadObject).length) {
+                    output += `// 📤 Payload enviado: ${JSON.stringify(payloadObject, null, 2)}\n`;
+                } else if (method === 'GET' && Object.keys(payloadObject).length) {
+                    output += `// 📤 Query string: ${buildQueryString(payloadObject)}\n`;
+                } else if(method === 'POST') {
+                    output += `// 📤 Payload: {}\n`;
+                }
+                output += `// 🔻 RESPOSTA (${status}):\n`;
+                if (typeof responseData === 'object') {
+                    output += JSON.stringify(responseData, null, 2);
+                } else {
+                    output += responseData;
+                }
+                responsePre.innerHTML = output;
+                responsePre.classList.remove('empty-response');
+            } catch (err) {
+                const endTime = performance.now();
+                const elapsed = (endTime - startTime).toFixed(1);
+                statusTag.innerHTML = `❌ Erro na requisição`;
+                timeInfoSpan.innerHTML = `⏱️ ${elapsed} ms`;
+                let errorMsg = `// ❌ Falha no fetch\n// Mensagem: ${err.message}\n`;
+                if (err.message.includes('Failed to fetch')) {
+                    errorMsg += `// Dica: Verifique CORS, URL ou conectividade.\n`;
+                }
+                errorMsg += `// Detalhes técnicos: ${err.toString()}`;
+                responsePre.innerHTML = errorMsg;
+                responsePre.classList.remove('empty-response');
+                console.error(err);
+            }
+        }
+
+        // Inicializar com algumas variáveis exemplo (úteis para demonstração)
+        function initializeExampleVariables() {
+            // Adiciona 2 linhas de exemplo para demonstração rápida
+            variableRows = [];
+            nextId = 1;
+            variableRows.push({
+                id: nextId++,
+                name: 'userId',
+                value: '1',
+                type: 'number'
+            });
+            variableRows.push({
+                id: nextId++,
+                name: 'title',
+                value: 'Teste via API Tester',
+                type: 'string'
+            });
+            variableRows.push({
+                id: nextId++,
+                name: 'completed',
+                value: 'false',
+                type: 'boolean'
+            });
+            updateVariablesUI();
+        }
+
+        // Eventos
+        addVariableBtn.addEventListener('click', () => {
+            addNewVariable();
+        });
+
+        sendRequestBtn.addEventListener('click', () => {
+            performFetch();
+        });
+
+        clearResponseBtn.addEventListener('click', () => {
+            clearResponse();
+        });
+
+        // Opcional: Se o usuário pressionar Enter na URL (comodidade)
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performFetch();
+            }
+        });
+
+        // Carregar configuração inicial + exemplo amigável.
+        initializeExampleVariables();
+        // Ajuste de aparência inicial: resposta neutra
+        clearResponse();
+        statusTag.innerHTML = '📡 Pronto (exemplo com variáveis)';
+    })();
+</script>
+</body>
+</html>
